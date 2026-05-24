@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.NewEndpointHitDto;
 import ru.practicum.ViewStatsDto;
+import ru.practicum.feign.StatsClient;
 import ru.practicum.service.StatsService;
 
 import java.time.LocalDateTime;
@@ -17,12 +18,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class StatsController {
+public class StatsController implements StatsClient {
     private final StatsService statsService;
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public EndpointHitDto saveEndpointHit(@RequestBody @Valid NewEndpointHitDto newEndpointHitDto) {
+    public EndpointHitDto hit(@RequestBody @Valid NewEndpointHitDto newEndpointHitDto) {
         log.info("Сервер статистики stats-server получил запрос на добавление записи с dto={}", newEndpointHitDto);
         return statsService.createEndpointHit(newEndpointHitDto);
     }
