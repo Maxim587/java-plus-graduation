@@ -8,6 +8,7 @@ import ru.practicum.NewEndpointHitDto;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.exception.ConditionsNotMetException;
 import ru.practicum.mapper.StatsMapper;
+import ru.practicum.model.EndpointHit;
 import ru.practicum.repository.StatsRepository;
 
 import java.time.LocalDateTime;
@@ -23,7 +24,9 @@ public class StatsServiceImpl implements StatsService {
     @Override
     @Transactional
     public EndpointHitDto createEndpointHit(NewEndpointHitDto newEndpointHitDto) {
-        return mapper.mapToEndpointHitDto(statsRepository.save(mapper.mapToEndpointHit(newEndpointHitDto)));
+        EndpointHit hit = mapper.mapToEndpointHit(newEndpointHitDto);
+        hit = statsRepository.save(hit);
+        return mapper.mapToEndpointHitDto(hit);
     }
 
     @Override
