@@ -15,7 +15,7 @@ spring:
     init.mode: always
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:6435/participation
+    url: jdbc:postgresql://localhost:6435/request
     username: main
     password: main
 

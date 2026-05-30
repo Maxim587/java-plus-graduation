@@ -14,7 +14,7 @@ import java.util.List;
 
 
 @FeignClient(
-        name = "participation-service",
+        name = "request-service",
         fallback = ParticipationClientFallback.class,
         configuration = FeignCustomConfig.class)
 public interface ParticipationClient {

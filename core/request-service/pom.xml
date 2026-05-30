@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>participation-service</artifactId>
+    <artifactId>request-service</artifactId>
 
     <dependencies>
         <dependency>

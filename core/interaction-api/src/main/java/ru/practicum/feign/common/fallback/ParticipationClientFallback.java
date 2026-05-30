@@ -46,6 +46,6 @@ public class ParticipationClientFallback implements ParticipationClient {
     }
 
     void logError() {
-        log.error("Fallback response: participation service is unavailable");
+        log.error("Fallback response: request service is unavailable");
     }
 }

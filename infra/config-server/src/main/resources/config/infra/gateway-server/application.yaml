@@ -26,10 +26,10 @@ spring:
                 name: FallbackController
                 fallbackUri: forward:/fallback
 
-        - id: participation_service_route
-          uri: lb://participation-service
+        - id: request_service_route
+          uri: lb://request-service
           predicates:
-            - Path=/users/*/requests/**, /users/*/events/*/requests/**, /internal/participation/**
+            - Path=/users/*/requests/**, /users/*/events/*/requests/**, /internal/request/**
           filters:
             - name: CircuitBreaker
               args:

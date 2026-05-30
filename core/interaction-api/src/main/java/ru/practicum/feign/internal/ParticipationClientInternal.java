@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 @FeignClient(
-        name = "participation-service-internal",
+        name = "request-service-internal",
         url = "http://localhost:8080",
-        path = "/internal/participation",
+        path = "/internal/request",
         fallback = ParticipationClientFallbackInternal.class,
         configuration = FeignCustomConfig.class)
 public interface ParticipationClientInternal {

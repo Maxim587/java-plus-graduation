@@ -50,17 +50,17 @@ services:
       interval: 5s
       retries: 10
 
-  participation-service-db:
+  request-service-db:
     image: postgres:16.1
-    container_name: participation-service-db-pg
+    container_name: request-service-db-pg
     ports:
       - "6435:5432"
     volumes:
-      - ./volumes/postgres/participation-service:/var/lib/postgresql/data/
+      - ./volumes/postgres/request-service:/var/lib/postgresql/data/
     environment:
       - POSTGRES_PASSWORD=main
       - POSTGRES_USER=main
-      - POSTGRES_DB=participation
+      - POSTGRES_DB=request
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s

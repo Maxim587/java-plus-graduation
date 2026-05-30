@@ -12,7 +12,7 @@ import java.util.Set;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(path = "/internal/participation")
+@RequestMapping(path = "/internal/request")
 public class InternalParticipationController implements ParticipationClientInternal {
     private final ParticipationRequestService service;
 
