@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: category-service
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 20000
+        max-attempts: 30
+      discovery:
+        serviceId: config-server
+        enabled: true
+      uri: ""
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+eureka:
+  instance:
+    preferIpAddress: false
+  client:
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/

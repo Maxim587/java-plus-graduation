@@ -1,0 +1,57 @@
+package ru.practicum.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import ru.practicum.enums.EventState;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "events")
+public class Event {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 2000)
+    private String annotation;
+
+    private Long categoryId;
+
+    @Column(name = "created_on", nullable = false)
+    private LocalDateTime createdOn;
+
+    @Column(name = "description", nullable = false, length = 7000)
+    private String description;
+
+    @Column(name = "event_date", nullable = false)
+    private LocalDateTime eventDate;
+
+    private Long initiatorId;
+
+    private boolean paid;
+
+    @Column(name = "participant_limit")
+    private Integer participantLimit = 0;
+
+    @Column(name = "published_on")
+    private LocalDateTime publishedOn;
+
+    @Column(name = "request_moderation")
+    private Boolean requestModeration;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state")
+    private EventState state;
+
+    @Column(name = "title", length = 120)
+    private String title;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
+    @JoinColumn(name = "location_id", nullable = false)
+    private EventLocation location = new EventLocation();
+}

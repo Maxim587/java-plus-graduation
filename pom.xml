@@ -34,6 +34,9 @@
 		<spring-cloud-dependencies.version>2023.0.3</spring-cloud-dependencies.version>
 		<stats-dto.version>0.0.1-SNAPSHOT</stats-dto.version>
 		<stats-client.version>0.0.1-SNAPSHOT</stats-client.version>
+		<interaction-api.version>0.0.1-SNAPSHOT</interaction-api.version>
+		<httpclient.version>4.5.14</httpclient.version>
+		<feign-httpclient.version>13.2.1</feign-httpclient.version>
 
 		<!--		<avro-schemas.version>1.0-SNAPSHOT</avro-schemas.version>-->
 		<!--		<proto-schemas.version>1.0-SNAPSHOT</proto-schemas.version>-->
@@ -160,17 +163,10 @@
 			</dependency>
 
 			<dependency>
-				<groupId>ru.yandex.practicum</groupId>
-				<artifactId>avro-schemas</artifactId>
-				<version>${avro-schemas.version}</version>
+				<groupId>ru.practicum</groupId>
+				<artifactId>interaction-api</artifactId>
+				<version>${interaction-api.version}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>ru.yandex.practicum</groupId>
-				<artifactId>proto-schemas</artifactId>
-				<version>${proto-schemas.version}</version>
-			</dependency>
-
 		</dependencies>
 	</dependencyManagement>
 
