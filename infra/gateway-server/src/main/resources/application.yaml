@@ -14,12 +14,28 @@ spring:
         serviceId: config-server
         enabled: true
       uri: ""
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+    loadbalancer:
+      cache:
+        ttl: 2s
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+      registry-fetch-interval-seconds: 3
   instance:
     preferIpAddress: true
     hostname: localhost

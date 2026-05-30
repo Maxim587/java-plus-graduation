@@ -28,6 +28,6 @@ public class CommentClientFallbackInternal implements CommentClientInternal {
     }
 
     void logError() {
-        log.error("Fallback response: user service is unavailable");
+        log.error("Fallback response: comment service is unavailable");
     }
 }

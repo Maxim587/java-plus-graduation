@@ -2,14 +2,27 @@ spring:
   application:
     name: discovery-server
 
+  cloud:
+    loadbalancer:
+      service-discovery:
+        timeout: 2
+      eager-load:
+        clients:
+          - comment-service
+          - event-service
+          - gateway-server
+
 server:
   port: 8761
 
 eureka:
   instance:
     hostname: localhost
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
   client:
     registerWithEureka: false
     fetchRegistry: false
+    registry-fetch-interval-seconds: 5
     serviceUrl:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/

@@ -125,14 +125,23 @@ public class CommentServiceImpl implements CommentService {
         return Optional.ofNullable(booleanBuilder.getValue());
     }
 
+    @Override
     public Map<Long, List<CommentDto>> getEventIdToCommentsDtoMap(Set<Long> eventIds) {
+        log.info("Начало формирования словаря EventIdToCommentsDto для событий " + eventIds);
         if (eventIds == null || eventIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
         List<Comment> comments = commentRepository.findAllByEventIdIn(eventIds);
+        if (comments == null || comments.isEmpty()) {
+            log.info("Комментарии для событий не найдены (количество={}). Возвращается пустой словарь", comments.size());
+            return Collections.emptyMap();
+        }
+        log.info("Найдены комментарии для событий в количестве: {}", comments.size());
         Set<Long> userIds = comments.stream().map(Comment::getAuthorId).collect(Collectors.toSet());
+        log.info("Запрос в user-service");
         List<UserShortDto> userShortDtos = userClientInternal.getUserShortDtos(userIds);
+        log.info("Запрос в user-service завершен. Получен список DTO в количестве: {}", userShortDtos.size());
         Map<Long, String> userNames = userShortDtos.stream().collect(Collectors.toMap(UserShortDto::getId, UserShortDto::getName));
 
         Map<Long, List<CommentDto>> commentsMap = new HashMap<>();
@@ -140,6 +149,7 @@ public class CommentServiceImpl implements CommentService {
             commentsMap.computeIfAbsent(comment.getEventId(), eventId -> new ArrayList<>())
                     .add(commentMapper.mapToCommentDto(comment, userNames.get(comment.getAuthorId())));
         });
+        log.info("Сформирован словарь EventIdToCommentsDto: {}", commentsMap.size());
         return commentsMap;
     }
 

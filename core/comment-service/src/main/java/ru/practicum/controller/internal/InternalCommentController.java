@@ -21,6 +21,7 @@ public class InternalCommentController implements CommentClientInternal {
     @Override
     @GetMapping("/map")
     public Map<Long, List<CommentDto>> getEventIdToCommentsDtoMap(@RequestBody Set<Long> eventIds) {
+        log.info("Получен запрос на формирование словаря комментариев по событиям" + eventIds);
         return commentService.getEventIdToCommentsDtoMap(eventIds);
     }
 

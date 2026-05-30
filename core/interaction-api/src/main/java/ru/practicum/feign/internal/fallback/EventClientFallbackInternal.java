@@ -25,6 +25,6 @@ public class EventClientFallbackInternal implements EventClientInternal {
 
 
     void logError() {
-        log.error("Fallback response: user service is unavailable");
+        log.error("Fallback response: event service is unavailable");
     }
 }

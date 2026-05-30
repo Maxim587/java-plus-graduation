@@ -28,6 +28,6 @@ public class CategoryClientFallbackInternal implements CategoryClientInternal {
     }
 
     void logError() {
-        log.error("Fallback response: user service is unavailable");
+        log.error("Fallback response: category service is unavailable");
     }
 }
