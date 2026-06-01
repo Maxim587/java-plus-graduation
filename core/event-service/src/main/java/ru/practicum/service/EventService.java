@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface EventService {
 
-    EventFullDto create(Long userId, NewEventDto newEventDto);
+    EventFullDto create(NewEventDto newEventDto);
 
-    EventFullDto updateByUser(Long userId, Long eventId, UpdateEventUserRequest request);
+    EventFullDto updateByUser(UpdateEventUserRequest request);
 
     EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest request);
 

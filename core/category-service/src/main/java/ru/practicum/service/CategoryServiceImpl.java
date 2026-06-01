@@ -39,10 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(Long catId) {
         categoryRepository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
-        EventInternalDto event = eventClientInternal.getExistingEventInternal(catId, null);
-        if (event != null) {
-            throw new ConditionsConflictException("Невозможно удалить категорию id=" + catId + ", т.к. есть связанное событие id=" + event.getId());
-        }
+        checkExistingEvent(catId, null);
         categoryRepository.deleteById(catId);
     }
 
@@ -77,5 +74,16 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> categories = categoryRepository.findAllByIdIn(categoryIds);
         return categories.stream()
                 .collect(Collectors.toMap(Category::getId, mapper::mapCategoryToCategoryDto));
+    }
+
+    private void checkExistingEvent(Long categoryId, Long initiatorId) {
+        if (categoryId == null && initiatorId == null) {
+            throw new IllegalArgumentException("Не переданы параметры categoryId или initiatorId");
+        }
+        EventInternalDto event = eventClientInternal.getExistingEventInternal(categoryId, null);
+
+        if (event != null) {
+            throw new ConditionsConflictException("Невозможно удалить категорию id=" + categoryId + ", т.к. есть связанное событие id=" + event.getId());
+        }
     }
 }

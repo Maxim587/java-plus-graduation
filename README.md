@@ -21,7 +21,7 @@
 Каждый микросервис использует собственную базу данных на основе СУБД PostgeSQL. Базы разворачиваются в контейнерах Docker.
 
 ## API
-Приложение использует порт 8080
+Приложение использует порт 8080.  
 Спецификации OpenApi для внешних сервисов:
 - основные сервисы [ewm-main-service-spec.json](https://github.com/Maxim587/java-plus-graduation#:~:text=ewm%2Dmain%2Dservice%2Dspec.json)
 - сервис статистики [ewm-stats-service-spec.json](https://github.com/Maxim587/java-plus-graduation#:~:text=ewm%2Dstats%2Dservice%2Dspec.json)

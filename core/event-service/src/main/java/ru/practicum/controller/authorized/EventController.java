@@ -25,7 +25,8 @@ public class EventController implements EventClientAuthorized {
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId, @Valid @RequestBody NewEventDto newEventDto) {
         log.info("Получен запрос от Пользователя {} на создание события {}", userId, newEventDto);
-        return eventService.create(userId, newEventDto);
+        newEventDto.setUserId(userId);
+        return eventService.create(newEventDto);
     }
 
     @PatchMapping("/{eventId}")
@@ -34,7 +35,9 @@ public class EventController implements EventClientAuthorized {
                                      @PathVariable Long eventId,
                                      @Valid @RequestBody UpdateEventUserRequest request) {
         log.info("Получен запрос от Пользователя с id {} на обновление события с id {}", userId, eventId);
-        return eventService.updateByUser(userId, eventId, request);
+        request.setUserId(userId);
+        request.setEventId(eventId);
+        return eventService.updateByUser(request);
     }
 
     @GetMapping("/{eventId}")

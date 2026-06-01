@@ -79,7 +79,7 @@ public class PublicEventController implements EventClientNonauthorized {
         try {
             log.info("Добавление события в сервис статистики с dto={}", hitDto);
             statsClient.hit(hitDto);
-            log.info("Добавление события getEvent в сервис статистики завершено успешно");
+            log.info("Добавление события в сервис статистики завершено успешно");
             return resp;
         } catch (FeignException e) {
             log.error("Ошибка feign-клиента сервиса статистики: {}", e.getMessage());

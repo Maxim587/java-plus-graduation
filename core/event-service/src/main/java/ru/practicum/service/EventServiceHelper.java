@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.comment.CommentDto;
@@ -44,7 +43,6 @@ import static ru.practicum.service.EventServiceImpl.DATE_TIME_FORMATTER;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class EventServiceHelper {
     private static final long MIN_HOURS_BETWEEN_EVENT_DATE_AND_PUBLISH_DATE = 1L;
     private static final long MIN_HOURS_FROM_NOW_TO_EVENT_DATE = 2L;
@@ -57,8 +55,14 @@ public class EventServiceHelper {
     private final ParticipationClientInternal participationClientInternal;
     private final CategoryClientInternal categoryClientInternal;
 
+
     public Event getEvent(Long eventId) {
         return eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
+    }
+
+    public Event getEventByIdAndInitiatorId(Long eventId, Long userId) {
+        return eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
     }
 
@@ -202,11 +206,6 @@ public class EventServiceHelper {
         return dtoList.stream()
                 .sorted(Comparator.comparing(EventShortDto::getId))
                 .toList();
-    }
-
-    public Event getEventByIdAndInitiatorId(Long eventId, Long userId) {
-        return eventRepository.findByIdAndInitiatorId(eventId, userId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
     }
 
     public void updateEventFieldsFromUserRequest(UpdateEventUserRequest request, Event event) {

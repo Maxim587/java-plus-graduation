@@ -21,14 +21,14 @@ import java.util.List;
 public class EventMapper {
     private final LocationMapper locationMapper = Mappers.getMapper(LocationMapper.class);
 
-    public static Event mapToEvent(NewEventDto newEventDto, Long userId, LocalDateTime eventDate) {
+    public static Event mapToEvent(NewEventDto newEventDto, LocalDateTime eventDate) {
         Event event = new Event();
 
         event.setAnnotation(newEventDto.getAnnotation());
         event.setDescription(newEventDto.getDescription());
         event.setEventDate(eventDate);
         event.setCreatedOn(LocalDateTime.now());
-        event.setInitiatorId(userId);
+        event.setInitiatorId(newEventDto.getUserId());
         event.setCategoryId(newEventDto.getCategory());
         event.setLocation(locationMapper.mapLocationToEventLocation(newEventDto.getLocation()));
         event.setPaid(newEventDto.getPaid());

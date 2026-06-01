@@ -30,11 +30,10 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     private final UserClientInternal userClientInternal;
     private final EventClientInternal eventClientInternal;
 
-
     @Override
     @Transactional
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        EventInternalDto event = eventClientInternal.getEventByIdInternal(eventId);
+        EventInternalDto event = getEventById(eventId);
         ParticipationRequest request = createParticipationRequest(userId, event);
 
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
@@ -69,7 +68,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     @Transactional
     public EventRequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest dto) {
-        EventInternalDto event = eventClientInternal.getEventByIdInternal(eventId);
+        EventInternalDto event = getEventById(eventId);
         checkRequesterIsEventInitiator(userId, event);
         ParticipationRequestStatus status = ParticipationRequestStatus.fromString(dto.getStatus());
 
@@ -131,7 +130,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     @Override
     public List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId) {
-        EventInternalDto event = eventClientInternal.getEventByIdInternal(eventId);
+        EventInternalDto event = getEventById(eventId);
         checkRequesterIsEventInitiator(userId, event);
         return requestRepository.findAllByEventId(eventId).stream()
                 .map(mapper::mapToParticipationRequestDto)
@@ -167,7 +166,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     }
 
     private ParticipationRequest createParticipationRequest(Long userId, EventInternalDto event) {
-        UserShortDto userShortDto = userClientInternal.getUserShortDtoById(userId);
+        UserShortDto userShortDto = getUserById(userId);
         validateRequest(event, userShortDto.getId());
         ParticipationRequest request = new ParticipationRequest();
         request.setRequesterId(userShortDto.getId());
@@ -196,5 +195,13 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         if (event.getParticipantLimit() > 0 && event.getParticipantLimit() == confirmedRequests) {
             throw new ConditionsConflictException("Достигнут лимит на участие у события");
         }
+    }
+
+    private EventInternalDto getEventById(Long eventId) {
+        return eventClientInternal.getEventByIdInternal(eventId);
+    }
+
+    private UserShortDto getUserById(Long userId) {
+        return userClientInternal.getUserShortDtoById(userId);
     }
 }

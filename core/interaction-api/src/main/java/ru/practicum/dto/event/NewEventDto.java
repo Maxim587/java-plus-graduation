@@ -9,6 +9,8 @@ import ru.practicum.dto.location.Location;
 
 @Data
 public class NewEventDto {
+    Long userId;
+
     @NotBlank(message = "Значение не должно быть пустым")
     @Size(min = 20, max = 2000, message = "Значение должно содержать от 20 до 2000 символов")
     private String annotation;

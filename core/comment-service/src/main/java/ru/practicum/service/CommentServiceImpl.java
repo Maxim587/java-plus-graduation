@@ -37,7 +37,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentDto createComment(Long userId, Long eventId, NewCommentDto commentDto) {
-        UserShortDto userShortDto = userClientInternal.getUserShortDtoById(userId);
+        UserShortDto userShortDto = getUserShortDto(userId);
         Comment comment = commentRepository.save(commentMapper.mapToComment(commentDto, userShortDto.getId(), eventId));
         return commentMapper.mapToCommentDto(comment, userShortDto.getName());
     }
@@ -50,7 +50,7 @@ public class CommentServiceImpl implements CommentService {
         checkUserIsCommentAuthor(userId, comment);
         comment.setText(commentDto.getText());
         comment.setStatus(CommentStatus.PENDING);
-        UserShortDto userShortDto = userClientInternal.getUserShortDtoById(userId);
+        UserShortDto userShortDto = getUserShortDto(userId);
         comment = commentRepository.save(comment);
         return commentMapper.mapToCommentDto(comment, userShortDto.getName());
     }
@@ -103,28 +103,6 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.deleteById(commentId);
     }
 
-    private void checkUserIsCommentAuthor(Long userId, Comment comment) {
-        if (!Objects.equals(comment.getAuthorId(), userId)) {
-            throw new ConditionsConflictException("Пользователь с id=" + userId + " не является автором комментария id=" + comment.getId());
-        }
-    }
-
-    private Optional<Predicate> getAdminCommentSearchCriteria(CommentSearchRequestAdmin req) {
-        QComment comment = QComment.comment;
-        BooleanBuilder booleanBuilder = new BooleanBuilder();
-
-        Optional.ofNullable(req.getText()).filter(text -> !text.isBlank())
-                .ifPresent(text -> booleanBuilder.and(comment.text.containsIgnoreCase(text)));
-        Optional.ofNullable(req.getEventIds()).filter(eventIds -> !eventIds.isEmpty())
-                .ifPresent(eventIds -> booleanBuilder.and(comment.eventId.in(eventIds)));
-        Optional.ofNullable(req.getUserId()).ifPresent(userId -> booleanBuilder.and(comment.authorId.eq(userId)));
-        Optional.ofNullable(req.getRangeStart()).ifPresent(start -> booleanBuilder.and(comment.created.goe(start)));
-        Optional.ofNullable(req.getRangeEnd()).ifPresent(end -> booleanBuilder.and(comment.created.loe(end)));
-        Optional.ofNullable(req.getStatusList()).ifPresent(statusList -> booleanBuilder.and(comment.status.in(statusList)));
-
-        return Optional.ofNullable(booleanBuilder.getValue());
-    }
-
     @Override
     public Map<Long, List<CommentDto>> getEventIdToCommentsDtoMap(Set<Long> eventIds) {
         log.info("Начало формирования словаря EventIdToCommentsDto для событий " + eventIds);
@@ -134,13 +112,13 @@ public class CommentServiceImpl implements CommentService {
 
         List<Comment> comments = commentRepository.findAllByEventIdIn(eventIds);
         if (comments == null || comments.isEmpty()) {
-            log.info("Комментарии для событий не найдены (количество={}). Возвращается пустой словарь", comments.size());
+            log.info("Комментарии для событий не найдены. Возвращается пустой словарь");
             return Collections.emptyMap();
         }
         log.info("Найдены комментарии для событий в количестве: {}", comments.size());
         Set<Long> userIds = comments.stream().map(Comment::getAuthorId).collect(Collectors.toSet());
         log.info("Запрос в user-service");
-        List<UserShortDto> userShortDtos = userClientInternal.getUserShortDtos(userIds);
+        List<UserShortDto> userShortDtos = getUserShortDto(userIds);
         log.info("Запрос в user-service завершен. Получен список DTO в количестве: {}", userShortDtos.size());
         Map<Long, String> userNames = userShortDtos.stream().collect(Collectors.toMap(UserShortDto::getId, UserShortDto::getName));
 
@@ -163,4 +141,35 @@ public class CommentServiceImpl implements CommentService {
             throw new ValidationException("Дата начала не может быть позже даты окончания.");
         }
     }
+
+    private Optional<Predicate> getAdminCommentSearchCriteria(CommentSearchRequestAdmin req) {
+        QComment comment = QComment.comment;
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+
+        Optional.ofNullable(req.getText()).filter(text -> !text.isBlank())
+                .ifPresent(text -> booleanBuilder.and(comment.text.containsIgnoreCase(text)));
+        Optional.ofNullable(req.getEventIds()).filter(eventIds -> !eventIds.isEmpty())
+                .ifPresent(eventIds -> booleanBuilder.and(comment.eventId.in(eventIds)));
+        Optional.ofNullable(req.getUserId()).ifPresent(userId -> booleanBuilder.and(comment.authorId.eq(userId)));
+        Optional.ofNullable(req.getRangeStart()).ifPresent(start -> booleanBuilder.and(comment.created.goe(start)));
+        Optional.ofNullable(req.getRangeEnd()).ifPresent(end -> booleanBuilder.and(comment.created.loe(end)));
+        Optional.ofNullable(req.getStatusList()).ifPresent(statusList -> booleanBuilder.and(comment.status.in(statusList)));
+
+        return Optional.ofNullable(booleanBuilder.getValue());
+    }
+
+    private void checkUserIsCommentAuthor(Long userId, Comment comment) {
+        if (!Objects.equals(comment.getAuthorId(), userId)) {
+            throw new ConditionsConflictException("Пользователь с id=" + userId + " не является автором комментария id=" + comment.getId());
+        }
+    }
+
+    private UserShortDto getUserShortDto(Long userId) {
+        return userClientInternal.getUserShortDtoById(userId);
+    }
+
+    private List<UserShortDto> getUserShortDto(Set<Long> userIds) {
+        return userClientInternal.getUserShortDtos(userIds);
+    }
+
 }

@@ -7,6 +7,10 @@ import ru.practicum.dto.location.Location;
 
 @Data
 public class UpdateEventUserRequest {
+    private Long userId;
+
+    private Long eventId;
+
     @Size(min = 20, max = 2000, message = "Значение должно содержать от 20 до 2000 символов")
     private String annotation;
 

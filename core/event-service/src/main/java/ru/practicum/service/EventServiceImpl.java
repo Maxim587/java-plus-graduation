@@ -31,10 +31,10 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventFullDto create(Long userId, NewEventDto newEventDto) {
+    public EventFullDto create(NewEventDto newEventDto) {
         LocalDateTime eventDate = LocalDateTime.parse(newEventDto.getEventDate(), DATE_TIME_FORMATTER);
         EventServiceHelper.checkEventDateIsValid(eventDate);
-        Event savedEvent = eventRepository.save(EventMapper.mapToEvent(newEventDto, userId, eventDate));
+        Event savedEvent = eventRepository.save(EventMapper.mapToEvent(newEventDto, eventDate));
         EventFullDto dto = helper.getEventFullDto(savedEvent);
         log.info("Создано событие: {}", dto);
         return dto;
@@ -42,8 +42,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventFullDto updateByUser(Long userId, Long eventId, UpdateEventUserRequest request) {
-        Event event = helper.getEventByIdAndInitiatorId(eventId, userId);
+    public EventFullDto updateByUser(UpdateEventUserRequest request) {
+        Event event = helper.getEventByIdAndInitiatorId(request.getEventId(), request.getUserId());
         helper.updateEventFieldsFromUserRequest(request, event);
         Event eventSaved = eventRepository.save(event);
         EventFullDto dto = helper.getEventFullDto(eventSaved);
