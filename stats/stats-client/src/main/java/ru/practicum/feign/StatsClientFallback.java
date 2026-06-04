@@ -7,6 +7,7 @@ import ru.practicum.NewEndpointHitDto;
 import ru.practicum.ViewStatsDto;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -23,6 +24,6 @@ public class StatsClientFallback implements StatsClient {
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.error("Fallback response: stats server is unavailable");
-        return null;
+        return Collections.emptyList();
     }
 }

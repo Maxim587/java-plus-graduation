@@ -16,17 +16,85 @@ services:
       interval: 5s
       retries: 10
 
-  ewm-db:
+  user-service-db:
     image: postgres:16.1
-    container_name: ewm-main-db-pg
+    container_name: user-service-db-pg
     ports:
-      - "6432:5432"
+      - "6433:5432"
     volumes:
-      - ./volumes/postgres/ewm-main:/var/lib/postgresql/data/
+      - ./volumes/postgres/user-service:/var/lib/postgresql/data/
     environment:
       - POSTGRES_PASSWORD=main
       - POSTGRES_USER=main
-      - POSTGRES_DB=main
+      - POSTGRES_DB=user
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  event-service-db:
+    image: postgres:16.1
+    container_name: event-service-db-pg
+    ports:
+      - "6434:5432"
+    volumes:
+      - ./volumes/postgres/event-service:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=main
+      - POSTGRES_USER=main
+      - POSTGRES_DB=event
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  request-service-db:
+    image: postgres:16.1
+    container_name: request-service-db-pg
+    ports:
+      - "6435:5432"
+    volumes:
+      - ./volumes/postgres/request-service:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=main
+      - POSTGRES_USER=main
+      - POSTGRES_DB=request
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  comment-service-db:
+    image: postgres:16.1
+    container_name: comment-service-db-pg
+    ports:
+      - "6436:5432"
+    volumes:
+      - ./volumes/postgres/comment-service:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=main
+      - POSTGRES_USER=main
+      - POSTGRES_DB=comment
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  category-service-db:
+    image: postgres:16.1
+    container_name: category-service-db-pg
+    ports:
+      - "6437:5432"
+    volumes:
+      - ./volumes/postgres/category-service:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=main
+      - POSTGRES_USER=main
+      - POSTGRES_DB=category
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s

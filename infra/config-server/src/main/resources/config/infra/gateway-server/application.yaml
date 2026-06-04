@@ -6,12 +6,51 @@ spring:
     gateway:
       discovery.locator.enabled: true
       routes:
-        - id: main_service_route
-          uri: lb://main-service
+        - id: user_service_route
+          uri: lb://user-service
           predicates:
-            - Path=/**
+            - Path=/admin/users/**, /internal/users/**
           filters:
-#            - PrefixPath=/api/v1
+            - name: CircuitBreaker
+              args:
+                name: FallbackController
+                fallbackUri: forward:/fallback
+
+        - id: comment_service_route
+          uri: lb://comment-service
+          predicates:
+            - Path=/admin/comments/**, /internal/comments/**, /users/*/comments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: FallbackController
+                fallbackUri: forward:/fallback
+
+        - id: request_service_route
+          uri: lb://request-service
+          predicates:
+            - Path=/users/*/requests/**, /users/*/events/*/requests/**, /internal/request/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: FallbackController
+                fallbackUri: forward:/fallback
+
+        - id: category_service_route
+          uri: lb://category-service
+          predicates:
+            - Path=/admin/categories/**, /categories/**, /internal/categories/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: FallbackController
+                fallbackUri: forward:/fallback
+
+        - id: event_service_route
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/events/**, /internal/events/**, /users/*/events/**, /events/**, /admin/compilations/**, /compilations/**, /internal/compilations/**
+          filters:
             - name: CircuitBreaker
               args:
                 name: FallbackController

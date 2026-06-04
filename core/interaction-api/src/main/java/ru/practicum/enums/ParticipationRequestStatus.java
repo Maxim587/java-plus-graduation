@@ -1,0 +1,18 @@
+package ru.practicum.enums;
+
+import ru.practicum.exception.ValidationException;
+
+public enum ParticipationRequestStatus {
+    PENDING,
+    CONFIRMED,
+    REJECTED,
+    CANCELED;
+
+    public static ParticipationRequestStatus fromString(String status) {
+        try {
+            return ParticipationRequestStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Некорректное значение параметра status: " + status);
+        }
+    }
+}

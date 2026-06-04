@@ -1,0 +1,18 @@
+package ru.practicum.dto.comment;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.practicum.enums.CommentStatus;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+public class CommentDto {
+    private Long id;
+    private LocalDateTime created;
+    private String text;
+    private String authorName;
+    private Long eventId;
+    private CommentStatus status;
+}
