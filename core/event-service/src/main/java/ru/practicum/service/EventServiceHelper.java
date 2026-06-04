@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.comment.CommentDto;
@@ -55,6 +56,12 @@ public class EventServiceHelper {
     private final ParticipationClientInternal participationClientInternal;
     private final CategoryClientInternal categoryClientInternal;
 
+
+    @Transactional
+    public Event saveEventInDatabase(final Event event) {
+        log.info("Сохранение события в БД, eventId");
+        return eventRepository.save(event);
+    }
 
     public Event getEvent(Long eventId) {
         return eventRepository.findById(eventId)
@@ -126,19 +133,31 @@ public class EventServiceHelper {
     }
 
     public EventFullDto getEventFullDto(Event event) {
+        log.info("Начало создания EventFullDto для события, eventId={}", event.getId());
+        Long eventId = event.getId();
         Long views = 0L;
         Long confirmedRequests = 0L;
         List<CommentDto> commentDtoList = new ArrayList<>();
 
         if (event.getPublishedOn() != null) {
             views = getEventViews(event);
-            confirmedRequests = participationClientInternal.getConfirmedRequestsCount(event.getId());
-            Set<Long> eventIds = Set.of(event.getId());
-            commentDtoList = commentClientInternal.getEventIdToCommentsDtoMap(eventIds).get(event.getId());
+            log.info("Получение подтвержденных запросов через клиент для события, eventId={}", eventId);
+            confirmedRequests = participationClientInternal.getConfirmedRequestsCount(eventId);
+            log.info("Завершено получение подтвержденных запросов через клиент для события, eventId={}", eventId);
+            Set<Long> eventIds = Set.of(eventId);
+            log.info("Получение комментариев через клиент для события, eventId={}", eventId);
+            commentDtoList = commentClientInternal.getEventIdToCommentsDtoMap(eventIds).get(eventId);
+            log.info("Завершено получение комментариев через клиент для события, eventId={}", eventId);
         }
+        log.info("Получение пользователя через клиент для события, eventId={}", eventId);
         UserShortDto userShortDto = userClientInternal.getUserShortDtoById(event.getInitiatorId());
+        log.info("Завершено получение пользователя через клиент для события, eventId={}", eventId);
+        log.info("Получение категории через клиент для события, eventId={}", eventId);
         CategoryDto categoryDto = categoryClientInternal.getCategory(event.getCategoryId());
-        return EventMapper.mapToFullDto(event, userShortDto, categoryDto, views, confirmedRequests, commentDtoList);
+        log.info("Завершено получение категории через клиент для события, eventId={}", eventId);
+        EventFullDto eventFullDto = EventMapper.mapToFullDto(event, userShortDto, categoryDto, views, confirmedRequests, commentDtoList);
+        log.info("Завершено создание EventFullDto для события, eventId={}", event.getId());
+        return eventFullDto;
     }
 
     public List<EventFullDto> getEventFullDtoList(Set<Event> events) {
@@ -208,7 +227,8 @@ public class EventServiceHelper {
                 .toList();
     }
 
-    public void updateEventFieldsFromUserRequest(UpdateEventUserRequest request, Event event) {
+    @Transactional
+    public Event updateEventFieldsFromUserRequest(UpdateEventUserRequest request, Event event) {
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConditionsConflictException("Нельзя редактировать опубликованное событие");
         }
@@ -266,9 +286,13 @@ public class EventServiceHelper {
             event.getLocation().setLat(request.getLocation().getLat());
             event.getLocation().setLon(request.getLocation().getLon());
         }
+        return eventRepository.save(event);
     }
 
-    public void updateEventFieldsFromAdminRequest(UpdateEventAdminRequest request, Event event) {
+    @Transactional
+    public Event updateEventFieldsFromAdminRequest(UpdateEventAdminRequest request, Long eventId) {
+        Event event = getEvent(eventId);
+
         if (event.getPublishedOn() != null && event.getPublishedOn().isAfter(event.getEventDate().plusHours(MIN_HOURS_BETWEEN_EVENT_DATE_AND_PUBLISH_DATE))) {
             throw new ValidationException("Дата начала изменяемого события должна быть не ранее чем за час от даты публикации");
         }
@@ -328,6 +352,7 @@ public class EventServiceHelper {
         if (request.getLocation() != null) {
             event.setLocation(locationMapper.mapLocationToEventLocation(request.getLocation()));
         }
+        return eventRepository.save(event);
     }
 
     public static Predicate getUserSearchCriteria(EventSearchRequestUser req) {

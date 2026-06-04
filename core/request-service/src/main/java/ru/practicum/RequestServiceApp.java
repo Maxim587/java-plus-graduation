@@ -9,8 +9,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @SpringBootApplication
 @ConfigurationPropertiesScan
-public class ParticipationServiceApp {
+public class RequestServiceApp {
     public static void main(String[] args) {
-        SpringApplication.run(ParticipationServiceApp.class, args);
+        SpringApplication.run(RequestServiceApp.class, args);
     }
 }

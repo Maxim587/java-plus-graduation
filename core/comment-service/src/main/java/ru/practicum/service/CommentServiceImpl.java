@@ -27,32 +27,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final UserClientInternal userClientInternal;
-
+    private final CommentServiceDatabase commentServiceDatabase;
 
     @Override
-    @Transactional
     public CommentDto createComment(Long userId, Long eventId, NewCommentDto commentDto) {
+        log.info("Обработка запроса на создание комментария к событию eventId={}", eventId);
         UserShortDto userShortDto = getUserShortDto(userId);
-        Comment comment = commentRepository.save(commentMapper.mapToComment(commentDto, userShortDto.getId(), eventId));
-        return commentMapper.mapToCommentDto(comment, userShortDto.getName());
+        Comment comment = commentServiceDatabase.saveCommentInDb(userId, eventId, commentDto);
+        CommentDto dto = commentMapper.mapToCommentDto(comment, userShortDto.getName());
+        log.info("Завершена обработка запроса на создание комментария к событию eventId={}", eventId);
+        return dto;
     }
 
     @Override
-    @Transactional
     public CommentDto updateComment(Long userId, Long commentId, NewCommentDto commentDto) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new NotFoundException("Комментарий с id: " + commentId + " не найден"));
-        checkUserIsCommentAuthor(userId, comment);
-        comment.setText(commentDto.getText());
-        comment.setStatus(CommentStatus.PENDING);
+        log.info("Обработка запроса на обновление комментария commentId={}", commentId);
         UserShortDto userShortDto = getUserShortDto(userId);
-        comment = commentRepository.save(comment);
-        return commentMapper.mapToCommentDto(comment, userShortDto.getName());
+        CommentDto dto = commentServiceDatabase.updateCommentInDb(userId, commentId, commentDto, userShortDto.getName());
+        log.info("Завершена обработка запроса на обновление комментария commentId={}", commentId);
+        return dto;
     }
 
     @Override
@@ -97,6 +94,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteCommentByUser(Long userId, Long commentId) {
+        log.info("Обработка запроса на удаление комментария commentId={}", commentId);
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("Комментарий с id: " + commentId + " не найден"));
         checkUserIsCommentAuthor(userId, comment);
@@ -110,7 +108,8 @@ public class CommentServiceImpl implements CommentService {
             return Collections.emptyMap();
         }
 
-        List<Comment> comments = commentRepository.findAllByEventIdIn(eventIds);
+        List<Comment> comments = commentServiceDatabase.getComments(eventIds);
+
         if (comments == null || comments.isEmpty()) {
             log.info("Комментарии для событий не найдены. Возвращается пустой словарь");
             return Collections.emptyMap();
@@ -165,10 +164,12 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private UserShortDto getUserShortDto(Long userId) {
+        log.info("Поиск пользователя через клиент, userId={}", userId);
         return userClientInternal.getUserShortDtoById(userId);
     }
 
     private List<UserShortDto> getUserShortDto(Set<Long> userIds) {
+        log.info("Поиск пользователей через клиент, userIds={}", userIds);
         return userClientInternal.getUserShortDtos(userIds);
     }
 

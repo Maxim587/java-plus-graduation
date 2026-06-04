@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final EventClientInternal eventClientInternal;
     private final CommentClientInternal commentClientInternal;
     private final ParticipationClientInternal participationClientInternal;
+    private final UserServiceDatabase userServiceDatabase;
 
     @Override
     @Transactional
@@ -56,11 +56,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public void deleteUser(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        userServiceDatabase.findUserById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
         checkRelations(userId);
-        userRepository.deleteById(userId);
+        userServiceDatabase.deleteUserById(userId);
     }
 
     @Override

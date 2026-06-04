@@ -43,7 +43,7 @@ public class AdminEventController implements EventClientAdmin {
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateByAdmin(@PathVariable Long eventId,
                                       @Valid @RequestBody UpdateEventAdminRequest request) {
-        log.info("Получен запрос на обновление события {} Администратором {}", eventId, request);
+        log.info("Получен запрос на обновление события {} Администратором", eventId);
         return eventService.updateByAdmin(eventId, request);
     }
 }

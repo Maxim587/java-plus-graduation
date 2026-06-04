@@ -24,7 +24,7 @@ public class EventController implements EventClientAuthorized {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId, @Valid @RequestBody NewEventDto newEventDto) {
-        log.info("Получен запрос от Пользователя {} на создание события {}", userId, newEventDto);
+        log.info("Получен запрос от Пользователя {} на создание события", userId);
         newEventDto.setUserId(userId);
         return eventService.create(newEventDto);
     }

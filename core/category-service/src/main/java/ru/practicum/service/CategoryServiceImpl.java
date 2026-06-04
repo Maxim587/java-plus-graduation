@@ -1,6 +1,7 @@
 package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +21,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper mapper;
     private final EventClientInternal eventClientInternal;
+    private final CategoryServiceDatabase categoryServiceDatabase;
 
     @Override
     @Transactional
@@ -35,12 +37,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional
     public void deleteCategory(Long catId) {
-        categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
-        checkExistingEvent(catId, null);
-        categoryRepository.deleteById(catId);
+        log.info("Обработка запроса на удаление категории: catId={}", catId);
+        categoryServiceDatabase.checkCategoryExists(catId);
+        checkLinkedEventsExist(catId, null);
+        categoryServiceDatabase.deleteCategoryInDatabase(catId);
+        log.info("Завершена обработка запроса на удаление категории: catId={}", catId);
     }
 
     @Override
@@ -48,9 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto updateCategory(Long catId, CategoryDto categoryDto) {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() -> new NotFoundException("Категория с id " + catId + " не найдена"));
-
         category.setName(categoryDto.getName());
-
         return mapper.mapCategoryToCategoryDto(categoryRepository.save(category));
     }
 
@@ -76,7 +76,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toMap(Category::getId, mapper::mapCategoryToCategoryDto));
     }
 
-    private void checkExistingEvent(Long categoryId, Long initiatorId) {
+    private void checkLinkedEventsExist(Long categoryId, Long initiatorId) {
+        log.info("Проверка существования связанных событий через клиент: categoryId={}", categoryId);
         if (categoryId == null && initiatorId == null) {
             throw new IllegalArgumentException("Не переданы параметры categoryId или initiatorId");
         }
@@ -85,5 +86,6 @@ public class CategoryServiceImpl implements CategoryService {
         if (event != null) {
             throw new ConditionsConflictException("Невозможно удалить категорию id=" + categoryId + ", т.к. есть связанное событие id=" + event.getId());
         }
+        log.info("Завершена проверка существования связанных событий через клиент: categoryId={}", categoryId);
     }
 }
