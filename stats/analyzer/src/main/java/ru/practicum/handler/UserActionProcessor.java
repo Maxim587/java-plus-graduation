@@ -26,7 +26,7 @@ public class UserActionProcessor {
     private static final int MIN_RECORDS_AMOUNT_TO_COMMIT_OFFSETS = 10;
     private final KafkaConsumer<String, UserActionAvro> consumer;
     private final AnalyzerKafkaConfig config;
-    UserActionService userActionService;
+    private final UserActionService userActionService;
 
 
     public void start() {
