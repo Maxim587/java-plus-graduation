@@ -33,6 +33,12 @@ public class ParticipationClientFallbackInternal implements ParticipationClientI
         throw new FeignClientUnavailableException("Сервис временно недоступен");
     }
 
+    @Override
+    public boolean isUserParticipatedInEvent(Long eventId, Long userId) {
+        logError();
+        throw new FeignClientUnavailableException("Сервис временно недоступен");
+    }
+
     void logError() {
         log.error("Fallback response: request service is unavailable");
     }

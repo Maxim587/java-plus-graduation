@@ -31,4 +31,9 @@ public class InternalParticipationController implements ParticipationClientInter
     public boolean existsByRequesterIdInternal(@RequestParam Long requesterId) {
         return service.existsByRequesterIdInternal(requesterId);
     }
+
+    @GetMapping("/{eventId}/participation")
+    public boolean isUserParticipatedInEvent(@PathVariable Long eventId, @RequestParam Long userId) {
+        return service.isUserParticipatedInEvent(eventId, userId);
+    }
 }

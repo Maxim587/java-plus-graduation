@@ -1,0 +1,49 @@
+grpc:
+  server:
+    port: 0
+
+spring:
+  main:
+    banner-mode: off
+  jpa:
+    hibernate.ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+      jdbc.time_zone: UTC
+  sql:
+    init.mode: always
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6438/analyzer
+    username: main
+    password: main
+
+
+kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    properties:
+      consume-attempt-timeout-ms: 500
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      user-action:
+        group.id: AnalyzerUserActionGroup
+        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value.deserializer: ru.practicum.kafka.serde.UserActionDeserializer
+        topics: stats.user-actions.v1
+      event-similarity:
+        group.id: AnalyzerSimilarityGroup
+        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value.deserializer: ru.practicum.kafka.serde.EventSimilarityDeserializer
+        topics: stats.events-similarity.v1
+
+
+logging:
+  level:
+    org:
+      springframework:
+        orm:
+          jpa: INFO
+        transaction: INFO

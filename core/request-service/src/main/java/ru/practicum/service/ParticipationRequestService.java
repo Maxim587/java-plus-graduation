@@ -24,4 +24,6 @@ public interface ParticipationRequestService {
     Map<Long, Long> getEventIdToConfirmedRequestsCount(Set<Long> eventIds);
 
     boolean existsByRequesterIdInternal(Long requesterId);
+
+    boolean isUserParticipatedInEvent(Long eventId, Long userId);
 }

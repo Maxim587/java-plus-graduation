@@ -2,14 +2,12 @@ package ru.practicum.service;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ViewStatsDto;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.comment.CommentDto;
 import ru.practicum.dto.event.*;
@@ -18,15 +16,15 @@ import ru.practicum.enums.EventState;
 import ru.practicum.enums.EventStateAdmin;
 import ru.practicum.enums.EventStateUser;
 import ru.practicum.enums.EventUserSort;
+import ru.practicum.ewm.stats.proto.RecommendedEventProto;
 import ru.practicum.exception.ConditionsConflictException;
-import ru.practicum.exception.FeignClientUnavailableException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
-import ru.practicum.feign.StatsClient;
 import ru.practicum.feign.internal.CategoryClientInternal;
 import ru.practicum.feign.internal.CommentClientInternal;
 import ru.practicum.feign.internal.ParticipationClientInternal;
 import ru.practicum.feign.internal.UserClientInternal;
+import ru.practicum.grpc.AnalyzerGrpcClient;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.LocationMapper;
 import ru.practicum.model.Event;
@@ -34,8 +32,8 @@ import ru.practicum.model.QEvent;
 import ru.practicum.repository.EventRepository;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.practicum.enums.EventStateAdmin.PUBLISH_EVENT;
 import static ru.practicum.enums.EventStateAdmin.REJECT_EVENT;
@@ -47,14 +45,13 @@ import static ru.practicum.service.EventServiceImpl.DATE_TIME_FORMATTER;
 public class EventServiceHelper {
     private static final long MIN_HOURS_BETWEEN_EVENT_DATE_AND_PUBLISH_DATE = 1L;
     private static final long MIN_HOURS_FROM_NOW_TO_EVENT_DATE = 2L;
-    private static final String EVENTS_ENDPOINT = "/events/";
     private final EventRepository eventRepository;
     private final LocationMapper locationMapper;
-    private final StatsClient statsClient;
     private final UserClientInternal userClientInternal;
     private final CommentClientInternal commentClientInternal;
     private final ParticipationClientInternal participationClientInternal;
     private final CategoryClientInternal categoryClientInternal;
+    private final AnalyzerGrpcClient analyzerGrpcClient;
 
 
     @Transactional
@@ -73,74 +70,31 @@ public class EventServiceHelper {
                 .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
     }
 
-    public Long getEventViews(Event event) {
-        log.info("Получение просмотров у события, id={}", event.getId());
-
-        List<String> uris = List.of(EVENTS_ENDPOINT + event.getId());
-        LocalDateTime start = event.getPublishedOn().truncatedTo(ChronoUnit.SECONDS);
-        LocalDateTime end = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-
-        try {
-            log.info("Отправка запроса на получение статистики с параметрами: start={}, end={}, uris={}", start, end, uris);
-            List<ViewStatsDto> viewStatsDtos = statsClient.getStats(start, end, uris, true);
-            log.info("Ответ от сервера статистики {}:", viewStatsDtos);
-            Long viewsCount = viewStatsDtos
-                    .stream()
-                    .findFirst()
-                    .map(stats -> stats.getHits() != null ? stats.getHits() : 0L)
-                    .orElse(0L);
-            log.info("Количество просмотров {}:", viewsCount);
-            return viewsCount;
-        } catch (FeignException e) {
-            log.error("Ошибка feign-клиента сервиса статистики: {}", e.getMessage());
-            throw new FeignClientUnavailableException(e.getMessage());
-        }
+    public double getEventRating(long eventId) {
+        log.info("Отправка запроса на получение рейтинга для события id={}", eventId);
+        double rating = analyzerGrpcClient.getInteractionsCount(List.of(eventId))
+                .map(RecommendedEventProto::getScore)
+                .findFirst().orElse(0.0);
+        log.info("Завершен запрос на получение рейтинга для события id={}. Получен рейтинг {}", eventId, rating);
+        return rating;
     }
 
-    public Map<Long, Long> getEventIdToViewsCountMap(Set<Event> events) {
-        List<String> uris = new ArrayList<>();
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start;
-        for (Event event : events) {
-            uris.add(EVENTS_ENDPOINT + event.getId());
-            if (event.getPublishedOn() != null && start.isAfter(event.getPublishedOn())) {
-                start = event.getPublishedOn();
-            }
-        }
-        if (start.isEqual(end)) {
-            return Collections.emptyMap();
-        }
-
-        List<ViewStatsDto> viewDtos;
-        try {
-            log.info("Отправка запроса на получение статистики с параметрами: start={}, end={}, uris={}", start, end, uris);
-            viewDtos = statsClient.getStats(start, end, uris, true);
-            log.info("Ответ от сервера статистики {}:", viewDtos);
-        } catch (FeignException e) {
-            log.error("Ошибка feign-клиента сервиса статистики: {}", e.getMessage());
-            throw new FeignClientUnavailableException(e.getMessage());
-        }
-
-        Map<Long, Long> viewsMap = new HashMap<>();
-        for (ViewStatsDto view : viewDtos) {
-            String[] parts = view.getUri().split("/");
-            if (parts.length == 3) {
-                Long eventId = Long.parseLong(parts[parts.length - 1]);
-                viewsMap.put(eventId, view.getHits());
-            }
-        }
-        return viewsMap;
+    public Map<Long, Double> getEventIdToRatingMap(Set<Long> eventIds) {
+        List<Long> eventIdList = eventIds.stream().toList();
+        log.info("Отправка запроса на получение рейтингов для событий: eventIds={}", eventIdList);
+        return analyzerGrpcClient.getInteractionsCount(eventIdList)
+                .collect(Collectors.toMap(RecommendedEventProto::getEventId, RecommendedEventProto::getScore));
     }
 
     public EventFullDto getEventFullDto(Event event) {
         log.info("Начало создания EventFullDto для события, eventId={}", event.getId());
         Long eventId = event.getId();
-        Long views = 0L;
+        double rating = 0.0;
         Long confirmedRequests = 0L;
         List<CommentDto> commentDtoList = new ArrayList<>();
 
         if (event.getPublishedOn() != null) {
-            views = getEventViews(event);
+            rating = getEventRating(event.getId());
             log.info("Получение подтвержденных запросов через клиент для события, eventId={}", eventId);
             confirmedRequests = participationClientInternal.getConfirmedRequestsCount(eventId);
             log.info("Завершено получение подтвержденных запросов через клиент для события, eventId={}", eventId);
@@ -155,7 +109,7 @@ public class EventServiceHelper {
         log.info("Получение категории через клиент для события, eventId={}", eventId);
         CategoryDto categoryDto = categoryClientInternal.getCategory(event.getCategoryId());
         log.info("Завершено получение категории через клиент для события, eventId={}", eventId);
-        EventFullDto eventFullDto = EventMapper.mapToFullDto(event, userShortDto, categoryDto, views, confirmedRequests, commentDtoList);
+        EventFullDto eventFullDto = EventMapper.mapToFullDto(event, userShortDto, categoryDto, rating, confirmedRequests, commentDtoList);
         log.info("Завершено создание EventFullDto для события, eventId={}", event.getId());
         return eventFullDto;
     }
@@ -174,7 +128,7 @@ public class EventServiceHelper {
         }
         Map<Long, UserShortDto> userIdToUserShortDtoMap = userClientInternal.userIdToUserShortDtoMap(userIds);
         Map<Long, CategoryDto> categoryIdToCategoryDtoMap = categoryClientInternal.getCategoryIdToCategoryDtoMap(categoryIds);
-        Map<Long, Long> eventIdToViewsCountMap = getEventIdToViewsCountMap(events);
+        Map<Long, Double> eventIdToRatingMap = getEventIdToRatingMap(eventIds);
         Map<Long, Long> eventIdToConfirmedRequestsCountMap = participationClientInternal.getEventIdToConfirmedRequestsCount(eventIds);
         Map<Long, List<CommentDto>> eventIdToCommentsDtoMap = commentClientInternal.getEventIdToCommentsDtoMap(eventIds);
 
@@ -182,7 +136,7 @@ public class EventServiceHelper {
                 .map(event -> EventMapper.mapToFullDto(event,
                         userIdToUserShortDtoMap.get(event.getInitiatorId()),
                         categoryIdToCategoryDtoMap.get(event.getCategoryId()),
-                        eventIdToViewsCountMap.getOrDefault(event.getId(), 0L),
+                        eventIdToRatingMap.getOrDefault(event.getId(), 0.0),
                         eventIdToConfirmedRequestsCountMap.getOrDefault(event.getId(), 0L),
                         eventIdToCommentsDtoMap.getOrDefault(event.getId(), Collections.emptyList())
                 ))
@@ -204,7 +158,7 @@ public class EventServiceHelper {
         }
         Map<Long, UserShortDto> userIdToUserShortDtoMap = userClientInternal.userIdToUserShortDtoMap(userIds);
         Map<Long, CategoryDto> categoryIdToCategoryDtoMap = categoryClientInternal.getCategoryIdToCategoryDtoMap(categoryIds);
-        Map<Long, Long> eventIdToViewsCountMap = getEventIdToViewsCountMap(events);
+        Map<Long, Double> eventIdToRatingMap = getEventIdToRatingMap(eventIds);
         Map<Long, Long> eventIdToConfirmedRequestsCountMap = participationClientInternal.getEventIdToConfirmedRequestsCount(eventIds);
         Map<Long, List<CommentDto>> eventIdToCommentsDtoMap = commentClientInternal.getEventIdToCommentsDtoMap(eventIds);
 
@@ -217,7 +171,7 @@ public class EventServiceHelper {
             EventShortDto eventShortDto = EventMapper.mapToShortDto(event,
                     userIdToUserShortDtoMap.get(event.getInitiatorId()),
                     categoryIdToCategoryDtoMap.get(event.getCategoryId()),
-                    eventIdToViewsCountMap.getOrDefault(event.getId(), 0L),
+                    eventIdToRatingMap.getOrDefault(event.getId(), 0.0),
                     confirmedRequestsCount,
                     eventIdToCommentsDtoMap.getOrDefault(event.getId(), Collections.emptyList()));
             dtoList.add(eventShortDto);
@@ -439,7 +393,7 @@ public class EventServiceHelper {
         EventUserSort userSort = EventUserSort.fromString(req.getSort());
         String sortColumn = switch (userSort) {
             case EVENT_DATE -> "eventDate";
-            case VIEWS -> "views";
+            case RATING -> "rating";
         };
         return Optional.of(Sort.by(Sort.Direction.DESC, sortColumn));
     }

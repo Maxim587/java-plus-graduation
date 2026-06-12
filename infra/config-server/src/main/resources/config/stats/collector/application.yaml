@@ -1,0 +1,22 @@
+grpc:
+  server:
+    port: 0
+
+spring:
+  main:
+    banner-mode: off
+
+collector:
+  kafka:
+    producer:
+      properties:
+        bootstrap.servers: localhost:9092
+        client.id: stats.collector
+        key.serializer: org.apache.kafka.common.serialization.StringSerializer
+        value.serializer: ru.practicum.kafka.serde.GeneralAvroSerializer
+      topics:
+        user-actions: stats.user-actions.v1
+
+logging:
+  level:
+    "org.apache.kafka": ERROR

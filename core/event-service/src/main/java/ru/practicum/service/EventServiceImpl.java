@@ -7,6 +7,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.dto.event.*;
+import ru.practicum.enums.UserActionType;
+import ru.practicum.ewm.stats.proto.RecommendedEventProto;
+import ru.practicum.exception.ConditionsNotMetException;
+import ru.practicum.feign.internal.ParticipationClientInternal;
+import ru.practicum.grpc.AnalyzerGrpcClient;
+import ru.practicum.grpc.CollectorGrpcClient;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.model.Event;
 import ru.practicum.repository.EventRepository;
@@ -14,9 +20,11 @@ import ru.practicum.repository.EventRepository;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -26,6 +34,9 @@ public class EventServiceImpl implements EventService {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
     private final EventRepository eventRepository;
     private final EventServiceHelper helper;
+    private final AnalyzerGrpcClient analyzerGrpcClient;
+    private final ParticipationClientInternal participationClientInternal;
+    private final CollectorGrpcClient collectorGrpcClient;
 
     @Override
     public EventFullDto create(NewEventDto newEventDto) {
@@ -119,5 +130,27 @@ public class EventServiceImpl implements EventService {
         return eventRepository.getFirstByCategoryIdOrInitiatorId(categoryId, initiatorId)
                 .map(EventMapper::mapToInternalDto)
                 .orElse(null);
+    }
+
+    @Override
+    public List<EventShortDto> getRecommendations(Long userId, Integer maxResults) {
+        log.info("Обработка запроса на поиск рекомендаций для Пользователя");
+        Set<Long> eventIds = analyzerGrpcClient.getRecommendationsForUser(userId, maxResults)
+                .map(RecommendedEventProto::getEventId)
+                .collect(Collectors.toSet());
+        Set<Event> events = new HashSet<>(eventRepository.findAllByIdIn(eventIds));
+        List<EventShortDto> dtoList = helper.getEventShortDtoList(events, false);
+        log.info("Завершена обработка запроса на поиск рекомендаций для Пользователя");
+        return dtoList;
+    }
+
+    @Override
+    public void likeEvent(Long eventId, Long userId) {
+        log.info("Обработка запроса на добавление лайка для события eventId={}, userId={}", eventId, userId);
+        if (!participationClientInternal.isUserParticipatedInEvent(eventId, userId)) {
+            throw new ConditionsNotMetException("Пользователь " + userId + " не является участником события " + eventId);
+        }
+        log.info("Завершена обработка запроса на добавление лайка для события eventId={}, userId={}", eventId, userId);
+        collectorGrpcClient.collectUserAction(userId, eventId, UserActionType.ACTION_LIKE);
     }
 }
