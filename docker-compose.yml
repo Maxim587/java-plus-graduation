@@ -31,24 +31,6 @@ services:
                              --bootstrap-server kafka:29092'"
     init: true
 
-
-  stats-db:
-    image: postgres:16.1
-    container_name: ewm-stats-db-pg
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./volumes/postgres/ewm-stats:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_PASSWORD=stat
-      - POSTGRES_USER=stat
-      - POSTGRES_DB=statistics
-    healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
-      interval: 5s
-      retries: 10
-
   user-service-db:
     image: postgres:16.1
     container_name: user-service-db-pg
