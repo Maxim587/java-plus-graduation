@@ -22,9 +22,15 @@ public class UserActionHandlerImpl implements UserActionHandler {
     @Override
     public void handle(UserActionProto userActionProto) {
         log.info("Обработка запроса на обработку действия пользователя event_id={}, user_id={}, action_type={}", userActionProto.getEventId(), userActionProto.getUserId(), userActionProto.getActionType());
-        UserActionAvro avro = mapper.mapUserActionProtoToAvro(userActionProto);
-        ProducerRecord<String, SpecificRecordBase> record =
-                new ProducerRecord<>(kafkaProducerConfig.getUserActionsTopic(), avro);
+        UserActionAvro message = mapper.mapUserActionProtoToAvro(userActionProto);
+        ProducerRecord<Long, SpecificRecordBase> record =
+                new ProducerRecord<>(
+                        kafkaProducerConfig.getUserActionsTopic(),
+                        null,
+                        message.getTimestamp().toEpochMilli(),
+                        message.getUserId(),
+                        message);
+
         producer.send(record);
     }
 }

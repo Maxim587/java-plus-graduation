@@ -49,13 +49,13 @@ public class AnalyzerKafkaConfig {
 
 
     @Bean
-    public KafkaConsumer<String, UserActionAvro> userActionKafkaConsumer() {
+    public KafkaConsumer<Long, UserActionAvro> userActionKafkaConsumer() {
         Properties properties = getUserActionKafkaConsumerConfig();
         return new KafkaConsumer<>(properties);
     }
 
     @Bean
-    public KafkaConsumer<String, EventSimilarityAvro> eventSimilaritytKafkaConsumer() {
+    public KafkaConsumer<Long, EventSimilarityAvro> eventSimilaritytKafkaConsumer() {
         Properties properties = getEventSimilarityKafkaConsumerConfig();
         return new KafkaConsumer<>(properties);
     }

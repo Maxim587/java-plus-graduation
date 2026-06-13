@@ -24,7 +24,7 @@ import java.util.Map;
 public class UserActionProcessor {
     private static final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
     private static final int MIN_RECORDS_AMOUNT_TO_COMMIT_OFFSETS = 10;
-    private final KafkaConsumer<String, UserActionAvro> consumer;
+    private final KafkaConsumer<Long, UserActionAvro> consumer;
     private final AnalyzerKafkaConfig config;
     private final UserActionService userActionService;
 
@@ -37,9 +37,9 @@ public class UserActionProcessor {
             log.debug("Создание подписки на топики: {}", topics);
             consumer.subscribe(topics);
             while (true) {
-                ConsumerRecords<String, UserActionAvro> records = consumer.poll(consumeAttemptTimeout);
+                ConsumerRecords<Long, UserActionAvro> records = consumer.poll(consumeAttemptTimeout);
                 int count = 0;
-                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                for (ConsumerRecord<Long, UserActionAvro> record : records) {
                     log.info("Получено сообщение {} из топика: {}", record.value(), record.topic());
                     log.info("Сообщение отправляется в обработчик");
                     userActionService.saveUserAction(record.value());
@@ -62,7 +62,7 @@ public class UserActionProcessor {
     }
 
 
-    private static void manageOffsets(ConsumerRecord<String, UserActionAvro> record, int count, KafkaConsumer<String, UserActionAvro> consumer) {
+    private static void manageOffsets(ConsumerRecord<Long, UserActionAvro> record, int count, KafkaConsumer<Long, UserActionAvro> consumer) {
         currentOffsets.put(
                 new TopicPartition(record.topic(), record.partition()),
                 new OffsetAndMetadata(record.offset() + 1)

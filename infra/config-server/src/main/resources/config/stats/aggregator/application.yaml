@@ -7,14 +7,14 @@ kafka:
   producer:
     properties:
       client.id: stats.aggregator
-      key.serializer: org.apache.kafka.common.serialization.StringSerializer
+      key.serializer: org.apache.kafka.common.serialization.LongSerializer
       value.serializer: ru.practicum.kafka.serde.GeneralAvroSerializer
     topics:
       events-similarity: stats.events-similarity.v1
   consumer:
     properties:
       group.id: AggregatorGroup
-      key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
       value.deserializer: ru.practicum.kafka.serde.UserActionDeserializer
       consume.attempt.timeout.ms: 500
       auto-offset-reset: earliest

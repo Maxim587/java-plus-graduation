@@ -16,13 +16,13 @@ import java.util.concurrent.Future;
 @Component
 public class AggregatorKafkaProducer implements AutoCloseable {
     private static final Duration PRODUCER_CLOSE_TIMEOUT = Duration.ofMillis(5L);
-    private final Producer<String, SpecificRecordBase> producer;
+    private final Producer<Long, SpecificRecordBase> producer;
 
-    public AggregatorKafkaProducer(Producer<String, SpecificRecordBase> producer) {
+    public AggregatorKafkaProducer(Producer<Long, SpecificRecordBase> producer) {
         this.producer = producer;
     }
 
-    public Future<RecordMetadata> send(ProducerRecord<String, SpecificRecordBase> record) {
+    public Future<RecordMetadata> send(ProducerRecord<Long, SpecificRecordBase> record) {
         log.debug("Отправка записи в kafka: {}", record);
         Future<RecordMetadata> future = producer.send(record);
         producer.flush();

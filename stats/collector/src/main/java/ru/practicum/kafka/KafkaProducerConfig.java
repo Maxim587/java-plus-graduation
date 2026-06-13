@@ -32,12 +32,12 @@ public class KafkaProducerConfig {
 
 
     @Bean
-    public Producer<String, SpecificRecordBase> getProducer() {
+    public Producer<Long, SpecificRecordBase> getProducer() {
         return new KafkaProducer<>(getConfig());
     }
 
     @Bean
-    public CollectorKafkaProducer getCollectorKafkaProducer(Producer<String, SpecificRecordBase> producer) {
+    public CollectorKafkaProducer getCollectorKafkaProducer(Producer<Long, SpecificRecordBase> producer) {
         return new CollectorKafkaProducer(producer);
     }
 
@@ -46,7 +46,7 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializer);
-        config.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
+//        config.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
         return config;
     }
 }

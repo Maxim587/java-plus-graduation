@@ -3,17 +3,13 @@ package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
-import ru.practicum.kafka.AggregatorKafkaConfig;
-import ru.practicum.kafka.AggregatorKafkaProducer;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.practicum.constant.StatsConstants.*;
@@ -22,14 +18,12 @@ import static ru.practicum.constant.StatsConstants.*;
 @Service
 @RequiredArgsConstructor
 public class UserActionServiceImpl implements UserActionService {
-    private final AggregatorKafkaProducer producer;
-    private final AggregatorKafkaConfig kafkaConfig;
     private final Map<Long, Map<Long, Double>> eventUserActionsMaxWeightMatrix = new HashMap<>();   //Map<Event, Map<User, MaxWeight>>
     private final Map<Long, Map<Long, Double>> minWeightsSum = new HashMap<>();                     //Map<Event1, Map<Event2, S_min>>
     private final Map<Long, Double> eventWeightsSum = new HashMap<>();                              //Map<Event, UserActionWeightsSum>
 
 
-    public void calculateSimilarity(UserActionAvro userActionAvro) {
+    public List<EventSimilarityAvro> calculateSimilarity(UserActionAvro userActionAvro) {
         log.info("Обработка запроса на расчет сходства событий {}", userActionAvro);
         long userId = userActionAvro.getUserId();
         long eventIdA = userActionAvro.getEventId();
@@ -55,7 +49,7 @@ public class UserActionServiceImpl implements UserActionService {
                 log.info("Новый вес действия {} больше текущего {}. Обновляем матрицу весов. Новая матрица = {}", newWeightA, oldWeightA, eventUserActionsMaxWeightMatrix);
             } else {
                 log.info("Новый вес действия {} меньше или равен текущему {}. Завершаем расчет", newWeightA, oldWeightA);
-                return;
+                return Collections.emptyList();
             }
         }
 
@@ -68,7 +62,8 @@ public class UserActionServiceImpl implements UserActionService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         log.info("Получаем матрицу весов других событий, с которыми пользователь взаимодействовал = {}", otherEventsUserInteracted);
 
-        log.info("Обновляем суммы минимальных весов для пар событий и рассчитываем коэффициенты сходства");
+        log.info("Формируем суммы минимальных весов для пар событий и рассчитываем коэффициенты сходства");
+        List<EventSimilarityAvro> similarityAvros = new ArrayList<>();
         for (Map.Entry<Long, Map<Long, Double>> entry : otherEventsUserInteracted.entrySet()) {
             Long eventIdB = entry.getKey();
             double weightB = entry.getValue().get(userId);
@@ -89,10 +84,11 @@ public class UserActionServiceImpl implements UserActionService {
             log.info("Рассчитан коэффициент сходства между событиями {} и {}. Коэффициент = {}", eventIdA, eventIdB, similarityScore);
 
             EventSimilarityAvro eventSimilarityAvro = getEventSimilarityAvro(eventIdA, eventIdB, similarityScore);
-            log.info("Отправляем в kafka сообщение с новым значением коэффициента сходства {}", eventSimilarityAvro);
-            producer.send(new ProducerRecord<>(kafkaConfig.getEventsSimilarityTopic(), eventSimilarityAvro));
+            similarityAvros.add(eventSimilarityAvro);
         }
+        log.info("Сформирован список схожих событий {}", similarityAvros);
         log.info("Завершена обработка запроса на расчет сходства событий {}", userActionAvro);
+        return similarityAvros;
     }
 
     private EventSimilarityAvro getEventSimilarityAvro(long eventIdA, long eventIdB, double similarityScore) {

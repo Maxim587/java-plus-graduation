@@ -30,12 +30,12 @@ kafka:
       enable-auto-commit: false
       user-action:
         group.id: AnalyzerUserActionGroup
-        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
         value.deserializer: ru.practicum.kafka.serde.UserActionDeserializer
         topics: stats.user-actions.v1
       event-similarity:
         group.id: AnalyzerSimilarityGroup
-        key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
         value.deserializer: ru.practicum.kafka.serde.EventSimilarityDeserializer
         topics: stats.events-similarity.v1
 
