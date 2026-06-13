@@ -91,6 +91,7 @@ public class AggregationStarter {
             return;
         }
 
+        log.info("Начало отправки записей в количестве {} в топик {}", similarities.size(), config.getEventsSimilarityTopic());
         for (EventSimilarityAvro similarity : similarities) {
             long timestamp = similarity.getTimestamp().toEpochMilli();
             ProducerRecord<Long, SpecificRecordBase> similarityRecord = new ProducerRecord<>(
@@ -103,6 +104,7 @@ public class AggregationStarter {
 
             aggregatorKafkaProducer.send(similarityRecord);
         }
+        log.info("Завершена отправка записей в количестве {} в топик {}", similarities.size(), config.getEventsSimilarityTopic());
     }
 }
 

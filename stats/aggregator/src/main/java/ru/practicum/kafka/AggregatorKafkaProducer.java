@@ -23,10 +23,10 @@ public class AggregatorKafkaProducer implements AutoCloseable {
     }
 
     public Future<RecordMetadata> send(ProducerRecord<Long, SpecificRecordBase> record) {
-        log.debug("Отправка записи в kafka: {}", record);
+        log.info("Отправка записи в kafka: {}", record);
         Future<RecordMetadata> future = producer.send(record);
         producer.flush();
-        log.debug("Отправка записи в kafka завершена: {}", future);
+        log.info("Отправка записи в kafka завершена: {}", future);
         return future;
     }
 
