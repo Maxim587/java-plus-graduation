@@ -66,7 +66,7 @@ public class UserActionServiceImpl implements UserActionService {
         Map<Long, Map<Long, Double>> otherEventsUserInteracted = eventUserActionsMaxWeightMatrix.entrySet().stream()
                 .filter(e -> e.getValue().containsKey(userId) && !e.getKey().equals(eventIdA))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        log.info("Получаем матрицу весов событий, с которыми пользователь взаимодействовал = {}", otherEventsUserInteracted);
+        log.info("Получаем матрицу весов других событий, с которыми пользователь взаимодействовал = {}", otherEventsUserInteracted);
 
         log.info("Обновляем суммы минимальных весов для пар событий и рассчитываем коэффициенты сходства");
         for (Map.Entry<Long, Map<Long, Double>> entry : otherEventsUserInteracted.entrySet()) {
@@ -88,11 +88,22 @@ public class UserActionServiceImpl implements UserActionService {
             double similarityScore = sMin / (Math.sqrt(weightSumA) * Math.sqrt(weightSumB));
             log.info("Рассчитан коэффициент сходства между событиями {} и {}. Коэффициент = {}", eventIdA, eventIdB, similarityScore);
 
-            EventSimilarityAvro eventSimilarityAvro = new EventSimilarityAvro(eventIdA, eventIdB, similarityScore, Instant.now());
+            EventSimilarityAvro eventSimilarityAvro = getEventSimilarityAvro(eventIdA, eventIdB, similarityScore);
             log.info("Отправляем в kafka сообщение с новым значением коэффициента сходства {}", eventSimilarityAvro);
             producer.send(new ProducerRecord<>(kafkaConfig.getEventsSimilarityTopic(), eventSimilarityAvro));
         }
         log.info("Завершена обработка запроса на расчет сходства событий {}", userActionAvro);
+    }
+
+    private EventSimilarityAvro getEventSimilarityAvro(long eventIdA, long eventIdB, double similarityScore) {
+        long firstEvent = Math.min(eventIdA, eventIdB);
+        long secondEvent = Math.max(eventIdA, eventIdB);
+        return EventSimilarityAvro.newBuilder()
+                .setEventA(firstEvent)
+                .setEventB(secondEvent)
+                .setScore(similarityScore)
+                .setTimestamp(Instant.now())
+                .build();
     }
 
     private double getActionWeight(ActionTypeAvro actionType) {
