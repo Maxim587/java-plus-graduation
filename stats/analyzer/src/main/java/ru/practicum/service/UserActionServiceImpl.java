@@ -1,6 +1,7 @@
 package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
@@ -10,6 +11,7 @@ import ru.practicum.repositoty.UserActionRepository;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserActionServiceImpl implements UserActionService {
@@ -19,6 +21,7 @@ public class UserActionServiceImpl implements UserActionService {
     @Override
     @Transactional
     public void saveUserAction(UserActionAvro userActionAvro) {
+        log.info("Обработка запроса на сохранение действия пользователя: {}", userActionAvro);
         UserAction userActionNew = mapper.mapUserActionAvroToUserAction(userActionAvro);
         Optional<UserAction> userActionOpt = repository.findByUserIdAndEventId(userActionAvro.getUserId(), userActionAvro.getEventId());
         if (userActionOpt.isEmpty()) {
@@ -30,5 +33,6 @@ public class UserActionServiceImpl implements UserActionService {
                 repository.save(userActionDb);
             }
         }
+        log.info("Завершена обработка запроса на сохранение действия пользователя: {}", userActionAvro);
     }
 }

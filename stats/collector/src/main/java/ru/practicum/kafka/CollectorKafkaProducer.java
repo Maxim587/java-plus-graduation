@@ -22,7 +22,7 @@ public class CollectorKafkaProducer implements AutoCloseable {
     }
 
     public Future<RecordMetadata> send(ProducerRecord<String, SpecificRecordBase> record) {
-        log.debug("Отправка записи в kafka: {}", record);
+        log.info("Отправка записи в kafka: {}", record);
         Future<RecordMetadata> future = producer.send(record);
         producer.flush();
         return future;

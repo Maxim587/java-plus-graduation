@@ -4,6 +4,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import ru.practicum.ewm.stats.proto.InteractionsCountRequestProto;
 import ru.practicum.ewm.stats.proto.RecommendationsControllerGrpc.RecommendationsControllerImplBase;
@@ -14,6 +15,7 @@ import ru.practicum.service.RecommendationService;
 
 import java.util.stream.Stream;
 
+@Slf4j
 @GrpcService
 @RequiredArgsConstructor
 public class RecommendationsControllerGrpc extends RecommendationsControllerImplBase {
@@ -23,6 +25,7 @@ public class RecommendationsControllerGrpc extends RecommendationsControllerImpl
     @Override
     public void getRecommendationsForUser(UserPredictionsRequestProto request,
                                           StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Поступил запрос на предоставление рекомендаций request={}", request);
         try {
             Stream<RecommendedEventProto> stream = recommendationService.getRecommendationsForUser(request);
             stream.forEach(responseObserver::onNext);
@@ -35,6 +38,7 @@ public class RecommendationsControllerGrpc extends RecommendationsControllerImpl
     @Override
     public void getSimilarEvents(SimilarEventsRequestProto request,
                                  StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Поступил запрос на предоставление похожих событий request={}", request);
         try {
             Stream<RecommendedEventProto> stream = recommendationService.getSimilarEvents(request);
             stream.forEach(responseObserver::onNext);
@@ -47,6 +51,7 @@ public class RecommendationsControllerGrpc extends RecommendationsControllerImpl
     @Override
     public void getInteractionsCount(InteractionsCountRequestProto request,
                                      StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Поступил запрос на предоставление рейтинга событий request={}", request);
         try {
             Stream<RecommendedEventProto> stream = recommendationService.getInteractionsCount(request);
             stream.forEach(responseObserver::onNext);

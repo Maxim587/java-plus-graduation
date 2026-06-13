@@ -40,6 +40,8 @@ public class UserActionProcessor {
                 ConsumerRecords<String, UserActionAvro> records = consumer.poll(consumeAttemptTimeout);
                 int count = 0;
                 for (ConsumerRecord<String, UserActionAvro> record : records) {
+                    log.info("Получено сообщение {} из топика: {}", record.value(), record.topic());
+                    log.info("Сообщение отправляется в обработчик");
                     userActionService.saveUserAction(record.value());
                     manageOffsets(record, count, consumer);
                     count++;

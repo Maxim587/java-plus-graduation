@@ -1,6 +1,7 @@
 package ru.practicum.handler;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
@@ -10,7 +11,7 @@ import ru.practicum.kafka.CollectorKafkaProducer;
 import ru.practicum.kafka.KafkaProducerConfig;
 import ru.practicum.mapper.UserActionMapper;
 
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserActionHandlerImpl implements UserActionHandler {
@@ -20,6 +21,7 @@ public class UserActionHandlerImpl implements UserActionHandler {
 
     @Override
     public void handle(UserActionProto userActionProto) {
+        log.info("Обработка запроса на обработку действия пользователя event_id={}, user_id={}, action_type={}", userActionProto.getEventId(), userActionProto.getUserId(), userActionProto.getActionType());
         UserActionAvro avro = mapper.mapUserActionProtoToAvro(userActionProto);
         ProducerRecord<String, SpecificRecordBase> record =
                 new ProducerRecord<>(kafkaProducerConfig.getUserActionsTopic(), avro);
