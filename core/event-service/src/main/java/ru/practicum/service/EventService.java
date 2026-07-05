@@ -25,4 +25,8 @@ public interface EventService {
     EventInternalDto getEventByIdInternal(Long eventId);
 
     EventInternalDto getExistingEventInternal(Long categoryId, Long initiatorId);
+
+    List<EventShortDto> getRecommendations(Long userId, Integer maxResults);
+
+    void likeEvent(Long eventId, Long userId);
 }

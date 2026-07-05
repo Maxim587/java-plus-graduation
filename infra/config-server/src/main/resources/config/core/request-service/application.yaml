@@ -19,6 +19,16 @@ spring:
     username: main
     password: main
 
+grpc:
+  client:
+    collector:
+      address: 'discovery:///collector'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+  server:
+    port: 0
+
 logging:
   level:
     org:

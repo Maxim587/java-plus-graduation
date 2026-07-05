@@ -11,10 +11,12 @@ import ru.practicum.dto.participation.ParticipationRequestDto;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.ParticipationRequestStatus;
+import ru.practicum.enums.UserActionType;
 import ru.practicum.exception.ConditionsConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.feign.internal.EventClientInternal;
 import ru.practicum.feign.internal.UserClientInternal;
+import ru.practicum.grpc.CollectorGrpcClient;
 import ru.practicum.mapper.ParticipationRequestMapper;
 import ru.practicum.model.ParticipationRequest;
 import ru.practicum.repository.ParticipationRequestRepository;
@@ -31,6 +33,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     private final UserClientInternal userClientInternal;
     private final EventClientInternal eventClientInternal;
     private final RequestServiceDatabase requestServiceDatabase;
+    private final CollectorGrpcClient collectorGrpcClient;
 
     @Override
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
@@ -43,6 +46,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         }
         request = requestServiceDatabase.saveRParticipationRequestInDatabase(request);
         ParticipationRequestDto dto = mapper.mapToParticipationRequestDto(request);
+        collectorGrpcClient.collectUserAction(userId, eventId, UserActionType.ACTION_REGISTER);
         log.info("Завершено создания запроса на участие в событии eventId={}", eventId);
         return dto;
     }
@@ -101,6 +105,11 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     public boolean existsByRequesterIdInternal(Long requesterId) {
         return requestRepository.existsByRequesterId(requesterId);
+    }
+
+    @Override
+    public boolean isUserParticipatedInEvent(Long eventId, Long userId) {
+        return requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, eventId, ParticipationRequestStatus.CONFIRMED);
     }
 
     private void checkRequesterIsEventInitiator(Long userId, EventInternalDto event) {

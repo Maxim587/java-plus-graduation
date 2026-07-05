@@ -55,13 +55,25 @@ public class EventClientFallback implements EventClientAdmin, EventClientAuthori
     }
 
     @Override
-    public EventFullDto getEvent(Long id, HttpServletRequest request) {
+    public EventFullDto getEvent(Long id, Long userId) {
         logError();
         throw new FeignClientUnavailableException("Сервис временно недоступен");
     }
 
     @Override
     public List<EventShortDto> searchForUser(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Integer from, Integer size, HttpServletRequest request) {
+        logError();
+        throw new FeignClientUnavailableException("Сервис временно недоступен");
+    }
+
+    @Override
+    public List<EventShortDto> getRecommendations(Integer maxResults, Long userId) {
+        logError();
+        throw new FeignClientUnavailableException("Сервис временно недоступен");
+    }
+
+    @Override
+    public void likeEvent(Long eventId, Long userId) {
         logError();
         throw new FeignClientUnavailableException("Сервис временно недоступен");
     }

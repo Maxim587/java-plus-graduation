@@ -13,21 +13,11 @@
     <packaging>pom</packaging>
     <modules>
         <module>stats-client</module>
-        <module>stats-dto</module>
-        <module>stats-server</module>
+        <module>aggregator</module>
+        <module>collector</module>
+        <module>analyzer</module>
+        <module>serialization</module>
+        <module>common</module>
     </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.retry</groupId>
-            <artifactId>spring-retry</artifactId>
-        </dependency>
-    </dependencies>
 
 </project>

@@ -27,4 +27,7 @@ public interface ParticipationClientInternal {
 
     @GetMapping("/exists")
     boolean existsByRequesterIdInternal(@RequestParam Long requesterId);
+
+    @GetMapping("/{eventId}/participation")
+    boolean isUserParticipatedInEvent(@PathVariable Long eventId, @RequestParam Long userId);
 }

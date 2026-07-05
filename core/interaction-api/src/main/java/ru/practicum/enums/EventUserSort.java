@@ -4,13 +4,13 @@ import ru.practicum.exception.ValidationException;
 
 public enum EventUserSort {
     EVENT_DATE,
-    VIEWS;
+    RATING;
 
     public static EventUserSort fromString(String sort) {
         try {
             return EventUserSort.valueOf(sort.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new ValidationException("Параметр сортировки sort может принимать значения EVENT_DATE или VIEWS. Передан " + sort);
+            throw new ValidationException("Параметр сортировки sort может принимать значения EVENT_DATE или RATING. Передан " + sort);
         }
     }
 }

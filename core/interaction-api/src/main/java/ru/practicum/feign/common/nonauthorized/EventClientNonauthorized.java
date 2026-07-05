@@ -4,10 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.feign.common.fallback.EventClientFallback;
@@ -26,7 +23,7 @@ public interface EventClientNonauthorized {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request);
+    EventFullDto getEvent(@PathVariable Long id, Long userId);
 
 
     @GetMapping
@@ -43,4 +40,10 @@ public interface EventClientNonauthorized {
                                       @RequestParam(defaultValue = "0") Integer from,
                                       @RequestParam(defaultValue = "10") Integer size,
                                       HttpServletRequest request);
+
+    @GetMapping("/recommendations")
+    List<EventShortDto> getRecommendations(Integer maxResults, Long userId);
+
+    @PutMapping("/{eventId}/like")
+    void likeEvent(@PathVariable Long eventId, Long userId);
 }
